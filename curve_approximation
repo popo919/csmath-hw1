@@ -1,0 +1,68 @@
+import numpy as np
+import math
+import matplotlib.pyplot as pt
+import numpy.random as ran
+from numpy.polynomial.polynomial import polyval
+from numpy.polynomial.polynomial import polyval
+
+def base_matrix(x, poly):
+    row_len = len(x)
+    base = []
+    for i in np.arange(poly+1):
+        row = np.ones(row_len)
+        for j in np.arange(i):
+            row = row * x
+        base.append(row)
+    return np.matrix(base)
+
+print(base_matrix([1,2,3], 3))
+
+########################
+#global variants
+########################
+num_sample = 10
+num_poly = 9
+sigma = 0.2
+# lamda = 0
+lamda = np.exp(-18)
+R = 2 * np.pi
+
+########################
+#real curve
+########################
+x = np.arange(0, R, 0.01)
+y = np.sin(x)
+pt.plot(x, y, "b", label = "sin")
+
+########################
+#sample with Gaussian noise
+########################
+sample_x = np.linspace(0, R, num_sample)
+sample_y = np.add(np.sin(sample_x), ran.normal(0, sigma, num_sample))
+pt.plot(sample_x, sample_y, "ro", label = "sample")
+
+########################
+#approximation
+########################
+B = base_matrix(sample_x, num_poly)
+B0 = B
+B = B * B.getT()
+B = B + lamda * np.matrix(np.eye(num_poly+1))
+if(lamda > 0):
+    B = np.linalg.pinv(B)
+else:
+    B = np.matrix(B).getI()
+B = B * B0
+w = np.squeeze(np.array(np.matrix.dot(B, sample_y)))
+print(w)
+
+res_y = polyval(x, w)
+pt.plot(x, res_y, "g", label='approximation')
+
+pt.legend(numpoints=1)
+if lamda <= 0 :
+    pt.title(str(num_sample) + " samples " +  str(num_poly) + " polynomial bases")
+else :
+    pt.title(str(num_sample) + " samples " +  str(num_poly) + " polynomial bases with lamda " + str(lamda))
+pt.axis([-0.2, R+0.2, -1.5, 1.5])
+pt.show()
